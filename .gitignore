@@ -1,0 +1,33 @@
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- PySpark (basura que deja al correr local) ---
+spark-warehouse/
+metastore_db/
+derby.log
+
+# --- Secretos / configuracion local ---
+.env
+
+# --- Sistema operativo ---
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- Editores ---
+.vscode/
+.idea/
+
+# --- Claude Code (configuracion local de sesion, si aparece) ---
+.claude/
+
+# NOTA: data/*.csv y etapa1-postgres/02_seed.sql NO se ignoran a proposito:
+# son datos generados pero deterministas (seed fija) y forman parte de la
+# entrega; versionarlos permite reproducir el TP sin correr el generador.

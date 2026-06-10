@@ -1,0 +1,61 @@
+# =============================================================================
+# Trabajo Práctico - Introducción a Bases de Datos
+# Entorno reproducible: PostgreSQL (Etapas 1-2), Redis (4.1) y MongoDB (4.2).
+#
+# Uso:
+#   docker compose up -d        # levanta los tres motores
+#   docker compose down -v      # destruye todo (incluida la base poblada)
+#
+# PostgreSQL carga automáticamente el schema y el seed en el primer arranque:
+# los .sql de etapa1-postgres/ se montan en /docker-entrypoint-initdb.d y se
+# ejecutan en orden (01_schema -> 02_seed -> 03_validacion). Para re-inicializar
+# desde cero: docker compose down -v && docker compose up -d
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: tpdb-postgres
+    environment:
+      POSTGRES_DB: pastas_tp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pastas
+    ports:
+      - "5432:5432"
+    volumes:
+      # Solo los *.sql del directorio se ejecutan en el init (orden alfabético)
+      - ./etapa1-postgres:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pastas_tp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: tpdb-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: tpdb-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping: 1}).ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  mongodata:
