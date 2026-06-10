@@ -21,9 +21,10 @@ Redis y MongoDB (persistencia políglota).
 │   └── generar_datos.py       # Generador determinista del seed y los CSVs
 ├── etapa2-sql-avanzado/       # Ventanas, estadísticas, performance
 ├── etapa3-spark/              # Notebook MapReduce (RDDs)
-├── etapa4-nosql/              # Notebooks Redis y MongoDB
-└── informe/                   # Informe por secciones + imágenes
+└── etapa4-nosql/              # Notebooks Redis y MongoDB
 ```
+
+El **informe** (PDF, entregable) se redacta y mantiene fuera del repositorio.
 
 ## Requisitos
 

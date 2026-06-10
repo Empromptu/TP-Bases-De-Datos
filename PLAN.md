@@ -13,7 +13,7 @@ sección *Estado actual*.
 
 | Etapa | Estado | Archivos |
 |---|---|---|
-| 1.1 Elección del modelo (DER) | ✅ Hecho | `informe/der.md` |
+| 1.1 Elección del modelo (DER) | ✅ Hecho | informe externo (DER) |
 | 1.2 Schema PostgreSQL | ✅ Hecho | `etapa1-postgres/01_schema.sql` |
 | 1.3 Poblado + validación | ✅ Hecho | `generar_datos.py`, `02_seed.sql`, `03_validacion.sql`, `data/*.csv` |
 | Etapa 0: entorno reproducible | ✅ Hecho | `docker-compose.yml`, `README.md`, `requirements.txt` |
@@ -23,7 +23,7 @@ sección *Estado actual*.
 | 3.1 MapReduce con Spark RDDs | ⬜ Pendiente | — |
 | 4.1 Redis | ⬜ Pendiente | — |
 | 4.2 MongoDB | ⬜ Pendiente | — |
-| Informe final (PDF, ≤15 páginas) | 🟡 Parcial | `informe/der.md` (sección 1.1) |
+| Informe final (PDF, ≤15 páginas) | 🟡 Parcial | externo (sección 1.1 redactada) |
 | README reproducibilidad | ✅ Hecho | `README.md` |
 
 ---
@@ -56,18 +56,14 @@ tpdb/
 ├── etapa3-spark/
 │   └── mapreduce_rdd.ipynb        # 3.1 — ≥3 procesamientos MapReduce sobre data/*.csv
 │
-├── etapa4-nosql/
-│   ├── redis.ipynb                # 4.1 — KV/hashes, listas, TTL
-│   └── mongodb.ipynb              # 4.2 — colecciones, CRUD, aggregation pipelines
-│
-└── informe/
-    ├── der.md                     # Sección 1.1 (ya escrita)
-    ├── etapa1.md                  # Secciones 1.2 y 1.3
-    ├── etapa2.md                  # Secciones 2.1–2.3 (con capturas de resultados)
-    ├── etapa3.md                  # Sección 3.1
-    ├── etapa4.md                  # Secciones 4.1–4.2
-    └── img/                       # DER exportado, capturas de EXPLAIN, resultados
+└── etapa4-nosql/
+    ├── redis.ipynb                # 4.1 — KV/hashes, listas, TTL
+    └── mongodb.ipynb              # 4.2 — colecciones, CRUD, aggregation pipelines
 ```
+
+El **informe** (PDF final, ≤15 páginas) se redacta y mantiene **fuera del
+repositorio** (Docs/PDF). Incluye el DER, las capturas de resultados y las
+secciones de cada etapa.
 
 **Convenciones que ya rigen y deben mantenerse:**
 - Todo vive en el schema `pastas` de PostgreSQL (`SET search_path TO pastas;`).
@@ -76,8 +72,8 @@ tpdb/
   quedan sincronizados — Postgres, Spark y Mongo siempre ven el mismo dataset.
 - Los scripts SQL deben ser ejecutables de punta a punta sin modificaciones
   (criterio de entrega del PDF).
-- Cada sección del informe se redacta en `informe/etapaN.md` a medida que se
-  termina la etapa, no al final. El PDF final se arma concatenando esos .md.
+- Cada sección del informe se redacta (en el documento externo) a medida que se
+  termina la etapa, no al final.
 
 ---
 
@@ -125,12 +121,12 @@ explotan bien este modelo (elegir 2–3):
    **participación de cada pasta en las ventas de su franquicia** con
    `SUM(...) OVER (PARTITION BY sello)` (porcentaje sin subquery).
 
-Para cada consulta, dejar en comentario del .sql y en `informe/etapa2.md`:
+Para cada consulta, dejar en comentario del .sql y en el informe:
 pregunta de negocio, por qué ventana (y no GROUP BY), y lectura del resultado.
 
 - [ ] Escribir y probar las consultas contra la base poblada
 - [ ] Capturar resultados (primeras ~10 filas) para el informe
-- [ ] Redactar sección 2.1 en `informe/etapa2.md`
+- [ ] Redactar sección 2.1 en el informe
 
 ### 2.2 Funciones estadísticas (`02_estadisticas.sql`)
 
@@ -152,7 +148,7 @@ acá va la versión completa que pide la consigna.
 - [ ] **CTE:** al menos una consulta con `WITH` (C2/C3 ya lo van a necesitar;
       si no, agregar una pregunta de negocio aparte, p. ej. "ticket promedio
       por franquicia comparado con el promedio global" con dos CTEs).
-- [ ] Redactar sección 2.2 en `informe/etapa2.md`
+- [ ] Redactar sección 2.2 en el informe
 
 ### 2.3 Análisis de performance (`03_performance.sql`)
 
@@ -167,11 +163,11 @@ acá va la versión completa que pide la consigna.
       Etapa 1, acá es el lugar correcto).
 - [ ] `EXPLAIN ANALYZE` **después**: comparar costos y explicar la diferencia
       de planes (seq scan → index scan / hash join → nested loop, etc.).
-- [ ] Redactar sección 2.3 en `informe/etapa2.md` con tabla comparativa
+- [ ] Redactar sección 2.3 en el informe con tabla comparativa
       antes/después.
 
 **Terminado cuando:** los tres .sql corren de punta a punta con `psql -f` sobre
-la base recién poblada, y `informe/etapa2.md` cubre los tres puntos.
+la base recién poblada, y el informe cubre los tres puntos.
 
 ---
 
@@ -204,7 +200,7 @@ celda markdown con (1) pregunta de negocio, (2) fase Map con la estructura
 - [ ] Celda/markdown sobre **lazy evaluation**: mostrar que las
       transformaciones no ejecutan nada hasta la acción (`collect`/`take`)
       — la consigna lo pide explícitamente en el informe
-- [ ] Redactar `informe/etapa3.md`
+- [ ] Redactar la sección de Etapa 3 en el informe
 
 **Terminado cuando:** "Restart & Run All" del notebook funciona sin errores
 contra `data/`.
@@ -236,7 +232,7 @@ ACID — Redis las sirve en memoria sin cargar Postgres.
   - `cache:ranking-pastas:{sello}` → TTL ~5 min (cache del ranking de 2.1,
     consulta costosa que no necesita estar al segundo)
   - Verificar con `ttl/pttl` e imprimir mensajes tipo "La promo X expiró".
-- [ ] Redactar sección 4.1 en `informe/etapa4.md` (por qué Redis vs Postgres
+- [ ] Redactar sección 4.1 en el informe (por qué Redis vs Postgres
       en cada caso)
 
 ### 4.2 MongoDB (`mongodb.ipynb`)
@@ -266,7 +262,7 @@ imagen y el string de conexión `mongodb://localhost:27017` en el informe).
     `$project` → `$sort`. (Si se quiere `$lookup`: clientes ↔ pastas por favorita.)
   - Explicar etapa por etapa en el informe + reflexión Postgres vs Spark vs
     Mongo que pide la nota de la consigna.
-- [ ] Redactar sección 4.2 en `informe/etapa4.md`
+- [ ] Redactar sección 4.2 en el informe
 
 **Terminado cuando:** ambos notebooks corren con "Restart & Run All" contra los
 contenedores del compose.
@@ -275,9 +271,9 @@ contenedores del compose.
 
 ## Cierre: informe y entrega
 
-- [ ] Exportar el DER de `informe/der.md` a imagen (mermaid.live) → `informe/img/`
-- [ ] Consolidar `informe/*.md` en un solo PDF de ≤15 páginas con capturas de
-      resultados (pandoc o impresión desde el editor)
+- [ ] Exportar el DER a imagen (mermaid.live) e incluirlo en el informe
+- [ ] Consolidar todas las secciones en un solo PDF de ≤15 páginas con capturas
+      de resultados
 - [ ] `README.md` final verificado en limpio: borrar contenedores y volúmenes,
       seguir el README al pie de la letra, confirmar que todo corre
 - [ ] Checklist de entregables del PDF de la consigna:
@@ -301,4 +297,4 @@ contenedores del compose.
    Etapa 2 dependen de la base poblada; las Etapas 3 y 4 solo dependen de
    `data/*.csv` y de los contenedores, así que pueden hacerse en paralelo.
 4. Al terminar una sub-etapa: tildar el checkbox, actualizar la tabla de
-   estado y redactar la sección correspondiente en `informe/`.
+   estado y redactar la sección correspondiente en el informe (externo).
