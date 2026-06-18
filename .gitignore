@@ -28,7 +28,4 @@ desktop.ini
 # --- Claude Code (configuracion local de sesion, si aparece) ---
 .claude/
 
-# NOTA: data/*.csv y etapa1-postgres/02_seed.sql NO se ignoran a proposito:
-# son datos generados pero deterministas (seed fija) y forman parte de la
-# entrega; versionarlos permite reproducir el TP sin correr el generador.
 PLAN.md
