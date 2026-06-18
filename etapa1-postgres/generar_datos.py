@@ -1,29 +1,9 @@
-#!/usr/bin/env python3
-# =============================================================================
-# Trabajo Práctico - Introducción a Bases de Datos
-# Etapa 1.3 - Poblado de datos
-#
-# Genera datos coherentes para el dominio "fábrica de pastas" usando Faker y
-# produce DOS salidas a partir del MISMO dataset (así Postgres, Spark y Mongo
-# trabajan sobre datos idénticos):
-#
-#   1) etapa1-postgres/02_seed.sql  -> INSERTs batcheados para PostgreSQL
-#   2) data/*.csv                   -> una tabla por archivo (para Spark/Mongo)
-#
-# Respeta TODAS las constraints del esquema (01_schema.sql):
-#   - PK compuestas, FKs coherentes (sin violaciones)
-#   - jerarquía disjunta seca/rellena
-#   - máx 6 ingredientes por relleno
-#   - máx 1000 clientes por franquicia
-#   - pasta favorita de la MISMA franquicia del cliente
-#   - precios y cantidades positivas, fechas no futuras
-#
-# Es DETERMINISTA (semilla fija) para que el poblado sea reproducible.
-#
-# Uso:
-#   pip install -r requirements.txt
-#   python generar_datos.py
-# =============================================================================
+# Etapa 1.3 - Poblado de datos.
+# Genera datos con Faker y los escribe en dos formatos a partir del mismo dataset:
+#   1) 02_seed.sql  -> INSERTs para PostgreSQL
+#   2) data/*.csv   -> un archivo por tabla (para despues usar Spark y Mongo)
+
+# Uso:  pip install -r requirements.txt  &&  python generar_datos.py
 
 import csv
 import os
@@ -197,8 +177,8 @@ ids_rellenos = [row[0] for row in rellenos]
 # ============================================================================
 print("Generando pastas...")
 pastas = []          # (sello, codigo_pasta, nombre, precio_por_kilo, tipo)
-pastas_secas = []    # (sello, codigo_pasta, tipo)
-pastas_rellenas = [] # (sello, codigo_pasta, tipo, id_relleno, promedio_kilos_diarios)
+pastas_secas = []    # (sello, codigo_pasta)
+pastas_rellenas = [] # (sello, codigo_pasta, id_relleno, promedio_kilos_diarios)
 pastas_por_franq = {s: [] for s in sellos}  # sello -> [(codigo, precio)]
 
 for sello in sellos:
@@ -212,7 +192,7 @@ for sello in sellos:
             precio = round(random.uniform(4000, 9000), 2)
             pastas.append([sello, codigo, nombre, precio, "R"])
             pastas_rellenas.append([
-                sello, codigo, "R",
+                sello, codigo,
                 random.choice(ids_rellenos),
                 round(random.uniform(5, 120), 2),  # promedio kilos diarios
             ])
@@ -220,7 +200,7 @@ for sello in sellos:
             nombre = random.choice(PASTAS_SECAS)
             precio = round(random.uniform(1500, 4000), 2)
             pastas.append([sello, codigo, nombre, precio, "S"])
-            pastas_secas.append([sello, codigo, "S"])
+            pastas_secas.append([sello, codigo])
         pastas_por_franq[sello].append((codigo, precio))
 
 # ============================================================================
@@ -277,9 +257,7 @@ for cli in clientes:
         elegidos = random.sample(codigos_precios, min(n_items, len(codigos_precios)))
         for codigo, precio in elegidos:
             cantidad = round(random.uniform(0.25, 5.0), 3)
-            # snapshot del precio con pequeña variación histórica (+-8%)
-            precio_unit = round(precio * random.uniform(0.92, 1.08), 2)
-            detalle_compra.append([id_compra, sello, codigo, cantidad, precio_unit])
+            detalle_compra.append([id_compra, sello, codigo, cantidad, precio])
 
 # ============================================================================
 # Resumen de volúmenes
@@ -320,9 +298,9 @@ with open(SQL_PATH, "w", encoding="utf-8") as fh:
                  ["id_relleno", "id_ingrediente", "cantidad"], relleno_ingrediente)
     emit_inserts(fh, "pasta",
                  ["sello", "codigo_pasta", "nombre", "precio_por_kilo", "tipo"], pastas)
-    emit_inserts(fh, "pasta_seca", ["sello", "codigo_pasta", "tipo"], pastas_secas)
+    emit_inserts(fh, "pasta_seca", ["sello", "codigo_pasta"], pastas_secas)
     emit_inserts(fh, "pasta_rellena",
-                 ["sello", "codigo_pasta", "tipo", "id_relleno",
+                 ["sello", "codigo_pasta", "id_relleno",
                   "promedio_kilos_diarios"], pastas_rellenas)
     emit_inserts(fh, "cliente",
                  ["id_cliente", "sello", "nombre", "apellido", "documento",
@@ -358,9 +336,9 @@ write_csv("relleno_ingrediente",
           ["id_relleno", "id_ingrediente", "cantidad"], relleno_ingrediente)
 write_csv("pasta",
           ["sello", "codigo_pasta", "nombre", "precio_por_kilo", "tipo"], pastas)
-write_csv("pasta_seca", ["sello", "codigo_pasta", "tipo"], pastas_secas)
+write_csv("pasta_seca", ["sello", "codigo_pasta"], pastas_secas)
 write_csv("pasta_rellena",
-          ["sello", "codigo_pasta", "tipo", "id_relleno",
+          ["sello", "codigo_pasta", "id_relleno",
            "promedio_kilos_diarios"], pastas_rellenas)
 write_csv("cliente",
           ["id_cliente", "sello", "nombre", "apellido", "documento",

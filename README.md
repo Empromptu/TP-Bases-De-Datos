@@ -1,7 +1,7 @@
 # TP Introducción a Bases de Datos — Fábrica de Pastas
 
 Trabajo práctico grupal. Modela una **cadena de fábricas de pastas** con
-franquicias independientes (enunciado en `modelo.txt`) y la implementa sobre
+franquicias independientes (enunciado en `enunciado.pdf`) y la implementa sobre
 cuatro tecnologías:
 
 - **PostgreSQL** — modelo relacional (Etapa 1) y SQL avanzado (Etapa 2)
@@ -19,7 +19,7 @@ por `etapa1-postgres/generar_datos.py`.
 
 ```
 ├── docker-compose.yml      # Postgres + Redis + Mongo
-├── modelo.txt              # Enunciado del dominio
+├── enunciado.pdf           # Consigna del TP
 ├── DER.png                 # Diagrama Entidad-Relación
 ├── data/                   # CSVs (mismo dataset que el seed SQL)
 ├── etapa1-postgres/        # Esquema, seed, validación y generador de datos
