@@ -21,11 +21,22 @@ por `etapa1-postgres/generar_datos.py`.
 ├── docker-compose.yml      # Postgres + Redis + Mongo
 ├── enunciado.pdf           # Consigna del TP
 ├── DER.png                 # Diagrama Entidad-Relación
-├── data/                   # CSVs (mismo dataset que el seed SQL)
-├── etapa1-postgres/        # Esquema, seed, validación y generador de datos
-├── etapa2-sql-avanzado/    # Ventanas, estadísticas, performance
-├── etapa3-spark/           # Notebook MapReduce (RDDs)
-└── etapa4-nosql/           # Notebooks Redis y MongoDB
+├── data/                       # CSVs (mismo dataset que el seed SQL)
+├── etapa1-postgres/            # Modelo relacional
+│   ├── 01_schema.sql           # DDL: tablas y restricciones
+│   ├── 02_seed.sql             # Carga de datos
+│   ├── 03_validacion.sql       # Consultas de validación
+│   ├── generar_datos.py        # Generador determinista (semilla 42) → SQL y CSV
+│   └── requirements.txt        # Dependencias del generador
+├── etapa2-sql-avanzado/        # SQL avanzado
+│   ├── 01_ventanas.sql         # Funciones de ventana
+│   ├── 02_estadisticas.sql     # Consultas estadísticas
+│   └── 03_performance.sql      # Índices y análisis de performance
+├── etapa3-spark/               # MapReduce con RDDs
+│   └── mapreduce.ipynb         # Notebook PySpark
+└── etapa4-nosql/               # Persistencia políglota
+    ├── redis.ipynb             # Notebook Redis
+    └── mongodb.ipynb           # Notebook MongoDB
 ```
 
 ## Requisitos
