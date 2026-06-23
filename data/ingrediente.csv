@@ -1,46 +1,46 @@
 id_ingrediente,nombre
-1,Pistacho
-2,Burrata
+1,Manteca
+2,Roquefort
 3,Verdura
-4,Manteca
-5,Roquefort
-6,Radicchio
-7,Crema
-8,Zucchini
-9,Tomate seco
-10,Sésamo
-11,Hongos
-12,Huevo
-13,Queso mozzarella
-14,Gorgonzola
-15,Morrón
-16,Espinaca
-17,Ajo
-18,Mascarpone
-19,Cebolla
-20,Pollo
-21,Jamón
-22,Calabaza
-23,Albahaca
-24,Aceitunas
+4,Crema
+5,Zucchini
+6,Tomate seco
+7,Sésamo
+8,Hongos
+9,Huevo
+10,Queso mozzarella
+11,Nuez moscada
+12,Jamón
+13,Perejil
+14,Ajo
+15,Pollo
+16,Trufa
+17,Calabaza
+18,Albahaca
+19,Batata
+20,Radicchio
+21,Atún
+22,Cerdo
+23,Puerro
+24,Cebolla
 25,Berenjena
-26,Puerro
-27,Almendra
-28,Cordero
-29,Queso parmesano
-30,Atún
-31,Nuez moscada
-32,Cerdo
-33,Salmón
-34,Panceta
-35,Batata
-36,Provolone
-37,Trufa
-38,Pera
-39,Perejil
-40,Castaña
-41,Nuez
-42,Acelga
+26,Castaña
+27,Queso parmesano
+28,Almendra
+29,Aceitunas
+30,Carne vacuna
+31,Salmón
+32,Mascarpone
+33,Acelga
+34,Provolone
+35,Choclo
+36,Burrata
+37,Cordero
+38,Nuez
+39,Espinaca
+40,Pera
+41,Panceta
+42,Pistacho
 43,Ricota
-44,Carne vacuna
-45,Choclo
+44,Gorgonzola
+45,Morrón

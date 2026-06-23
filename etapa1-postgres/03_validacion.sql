@@ -55,9 +55,49 @@ JOIN cliente cl   ON cl.id_cliente = co.id_cliente
 JOIN franquicia f ON f.sello = cl.sello
 WHERE co.fecha_hora::date < f.fecha_inicio;
 
+\echo '-- A8. Direcciones huerfanas (sin franquicia ni cliente)'
+SELECT d.id_direccion
+FROM direccion d
+LEFT JOIN franquicia f ON f.id_direccion = d.id_direccion
+LEFT JOIN cliente    c ON c.id_direccion = d.id_direccion
+WHERE f.id_direccion IS NULL AND c.id_direccion IS NULL;
+
+\echo '-- A9. Direcciones compartidas por mas de un dueno (rompe el 1:1)'
+SELECT d.id_direccion,
+       COUNT(DISTINCT f.sello)      AS n_franquicias,
+       COUNT(DISTINCT c.id_cliente) AS n_clientes
+FROM direccion d
+LEFT JOIN franquicia f ON f.id_direccion = d.id_direccion
+LEFT JOIN cliente    c ON c.id_direccion = d.id_direccion
+GROUP BY d.id_direccion
+HAVING COUNT(DISTINCT f.sello) + COUNT(DISTINCT c.id_cliente) > 1;
+
+\echo '-- A10. Integridad de la jerarquia geografica (niveles sin padre)'
+SELECT 'provincia' AS nivel, pr.id_provincia AS id FROM provincia pr
+  LEFT JOIN pais pa ON pa.id_pais = pr.id_pais WHERE pa.id_pais IS NULL
+UNION ALL
+SELECT 'localidad', l.id_localidad FROM localidad l
+  LEFT JOIN provincia pr ON pr.id_provincia = l.id_provincia WHERE pr.id_provincia IS NULL
+UNION ALL
+SELECT 'barrio', b.id_barrio FROM barrio b
+  LEFT JOIN localidad l ON l.id_localidad = b.id_localidad WHERE l.id_localidad IS NULL
+UNION ALL
+SELECT 'direccion', d.id_direccion FROM direccion d
+  LEFT JOIN barrio b ON b.id_barrio = d.id_barrio WHERE b.id_barrio IS NULL;
+
+\echo '-- A11. Direcciones con numero de puerta invalido'
+SELECT id_direccion, numero_puerta
+FROM direccion
+WHERE numero_puerta <= 0;
+
 \echo ''
 \echo '== B) Cantidad de registros por tabla =='
-SELECT 'franquicia'          AS tabla, COUNT(*) AS filas FROM franquicia
+SELECT 'pais'                AS tabla, COUNT(*) AS filas FROM pais
+UNION ALL SELECT 'provincia',           COUNT(*) FROM provincia
+UNION ALL SELECT 'localidad',           COUNT(*) FROM localidad
+UNION ALL SELECT 'barrio',              COUNT(*) FROM barrio
+UNION ALL SELECT 'direccion',           COUNT(*) FROM direccion
+UNION ALL SELECT 'franquicia',          COUNT(*) FROM franquicia
 UNION ALL SELECT 'pasta',               COUNT(*) FROM pasta
 UNION ALL SELECT 'pasta_seca',          COUNT(*) FROM pasta_seca
 UNION ALL SELECT 'pasta_rellena',       COUNT(*) FROM pasta_rellena

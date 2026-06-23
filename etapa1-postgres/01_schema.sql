@@ -6,19 +6,66 @@ DROP SCHEMA IF EXISTS pastas CASCADE;
 CREATE SCHEMA pastas;
 SET search_path TO pastas;
 
--- Cada franquicia es independiente y se identifica por su sello.
+
+CREATE TABLE pais (
+    id_pais SERIAL      PRIMARY KEY,
+    nombre  VARCHAR(80) NOT NULL UNIQUE
+);
+
+CREATE TABLE provincia (
+    id_provincia SERIAL      PRIMARY KEY,
+    nombre       VARCHAR(80) NOT NULL,
+    id_pais      INTEGER     NOT NULL,
+
+    CONSTRAINT fk_provincia_pais       FOREIGN KEY (id_pais)
+        REFERENCES pais (id_pais) ON DELETE CASCADE,
+    CONSTRAINT uq_provincia_nombre_pais UNIQUE (id_pais, nombre)
+);
+
+CREATE TABLE localidad (
+    id_localidad SERIAL      PRIMARY KEY,
+    nombre       VARCHAR(80) NOT NULL,
+    id_provincia INTEGER     NOT NULL,
+
+    CONSTRAINT fk_localidad_provincia        FOREIGN KEY (id_provincia)
+        REFERENCES provincia (id_provincia) ON DELETE CASCADE,
+    CONSTRAINT uq_localidad_nombre_provincia UNIQUE (id_provincia, nombre)
+);
+
+CREATE TABLE barrio (
+    id_barrio    SERIAL      PRIMARY KEY,
+    nombre       VARCHAR(80) NOT NULL,
+    id_localidad INTEGER     NOT NULL,
+
+    CONSTRAINT fk_barrio_localidad        FOREIGN KEY (id_localidad)
+        REFERENCES localidad (id_localidad) ON DELETE CASCADE,
+    CONSTRAINT uq_barrio_nombre_localidad UNIQUE (id_localidad, nombre)
+);
+
+CREATE TABLE direccion (
+    id_direccion  SERIAL       PRIMARY KEY,
+    calle         VARCHAR(120) NOT NULL,
+    numero_puerta INTEGER      NOT NULL,
+    codigo_postal VARCHAR(10)  NOT NULL,
+    id_barrio     INTEGER      NOT NULL,
+
+    CONSTRAINT fk_direccion_barrio  FOREIGN KEY (id_barrio)
+        REFERENCES barrio (id_barrio) ON DELETE RESTRICT,
+    CONSTRAINT chk_direccion_puerta CHECK (numero_puerta > 0)
+);
+
+-- Cada franquicia es independiente y se identifica por su sello. Su ubicacion
+-- vive en direccion.
 CREATE TABLE franquicia (
     sello           VARCHAR(20)  PRIMARY KEY,
-    calle           VARCHAR(120) NOT NULL,
-    numero_puerta   INTEGER      NOT NULL,
-    codigo_postal   VARCHAR(10)  NOT NULL,
-    barrio          VARCHAR(80)  NOT NULL,
+    id_direccion    INTEGER      NOT NULL UNIQUE,
     email           VARCHAR(150) NOT NULL UNIQUE,
     telefono        VARCHAR(30)  NOT NULL,
     fecha_inicio    DATE         NOT NULL,
 
-    CONSTRAINT chk_franquicia_puerta CHECK (numero_puerta > 0),
-    CONSTRAINT chk_franquicia_fecha  CHECK (fecha_inicio <= CURRENT_DATE)
+    CONSTRAINT fk_franquicia_direccion FOREIGN KEY (id_direccion)
+        REFERENCES direccion (id_direccion) ON DELETE RESTRICT,
+    CONSTRAINT chk_franquicia_fecha    CHECK (fecha_inicio <= CURRENT_DATE)
 );
 
 -- La pasta pertenece a una franquicia, por eso la PK es (sello, codigo_pasta):
@@ -94,6 +141,7 @@ CREATE TABLE relleno_ingrediente (
 CREATE TABLE cliente (
     id_cliente       SERIAL       PRIMARY KEY,
     sello            VARCHAR(20)  NOT NULL,
+    id_direccion     INTEGER      NOT NULL UNIQUE,
     nombre           VARCHAR(80)  NOT NULL,
     apellido         VARCHAR(80)  NOT NULL,
     documento        VARCHAR(20)  NOT NULL,
@@ -104,6 +152,8 @@ CREATE TABLE cliente (
 
     CONSTRAINT fk_cliente_franquicia FOREIGN KEY (sello)
         REFERENCES franquicia (sello) ON DELETE CASCADE,
+    CONSTRAINT fk_cliente_direccion  FOREIGN KEY (id_direccion)
+        REFERENCES direccion (id_direccion) ON DELETE RESTRICT,
     CONSTRAINT fk_cliente_favorita   FOREIGN KEY (sello, codigo_favorita)
         REFERENCES pasta (sello, codigo_pasta) ON DELETE SET NULL,
     CONSTRAINT uq_cliente_documento  UNIQUE (sello, documento),

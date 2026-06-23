@@ -23,7 +23,12 @@ N_INGREDIENTES        = 45
 N_RELLENOS            = 50
 PASTAS_POR_FRANQ      = (18, 32)    # rango por franquicia
 CLIENTES_POR_FRANQ    = (300, 700)  # < 1000 (constraint de negocio)
-COMPRAS_POR_CLIENTE   = (0, 8)      # algunos clientes no compran
+# Cantidad de compras por cliente: distribucion con cola larga (la mayoria
+# compra poco, unos pocos son clientes frecuentes) en vez de uniforme, para que
+# la cantidad de clientes por nivel de compras NO salga pareja. Tuneable: ajustar
+# los pesos (mas peso = mas clientes con esa cantidad de compras).
+COMPRAS_VALORES = list(range(0, 13))                       # 0..12 compras
+COMPRAS_PESOS   = [5, 16, 20, 18, 14, 10, 7, 5, 3, 2, 1.5, 1, 0.5]
 ITEMS_POR_COMPRA      = (1, 4)
 ING_POR_RELLENO       = (2, 6)      # <= 6 (constraint de negocio)
 BATCH                 = 500         # filas por sentencia INSERT multi-row
@@ -41,12 +46,56 @@ random.seed(SEED)
 # ----------------------------------------------------------------------------
 # Catálogos del dominio (datos realistas de pastas)
 # ----------------------------------------------------------------------------
-BARRIOS_CABA = [
-    "Palermo", "Recoleta", "Belgrano", "Caballito", "Almagro", "Flores",
-    "Villa Crespo", "San Telmo", "Boedo", "Núñez", "Villa Urquiza",
-    "Saavedra", "Colegiales", "Chacarita", "Barracas", "La Boca",
-    "Constitución", "Balvanera", "Villa Devoto", "Liniers",
-]
+# Catalogo geografico (jerarquia pais > provincia > localidad > barrio).
+# Se construye sin usar `random` para que los ids salgan por orden de iteracion
+# (estable en Python 3.7+) y el dataset siga siendo determinista.
+# Cada localidad tiene un "cp" base (codigo postal de la zona) y sus barrios.
+# Los nombres de barrio pueden repetirse entre localidades (p.ej. "Centro"):
+# el UNIQUE del schema es (id_localidad, nombre), no global.
+GEOGRAFIA = {
+    "Argentina": {
+        "Ciudad Autónoma de Buenos Aires": {
+            "CABA": {"cp": 1400, "barrios": [
+                "Palermo", "Recoleta", "Belgrano", "Caballito", "Almagro",
+                "Flores", "Villa Crespo", "San Telmo", "Boedo", "Núñez",
+                "Villa Urquiza", "Saavedra", "Colegiales", "Chacarita",
+                "Barracas", "La Boca", "Constitución", "Balvanera",
+                "Villa Devoto", "Liniers",
+            ]},
+        },
+        "Buenos Aires": {
+            "La Plata": {"cp": 1900, "barrios": [
+                "Casco Urbano", "Tolosa", "Los Hornos", "City Bell",
+                "Gonnet", "Villa Elisa",
+            ]},
+            "Mar del Plata": {"cp": 7600, "barrios": [
+                "Centro", "La Perla", "Güemes", "Constitución",
+                "Punta Mogotes",
+            ]},
+            "Bahía Blanca": {"cp": 8000, "barrios": [
+                "Centro", "Villa Mitre", "Palihue", "Patagonia",
+            ]},
+        },
+        "Córdoba": {
+            "Córdoba Capital": {"cp": 5000, "barrios": [
+                "Nueva Córdoba", "Alberdi", "Güemes", "Cerro de las Rosas",
+                "Alta Córdoba",
+            ]},
+            "Villa Carlos Paz": {"cp": 5152, "barrios": [
+                "Centro", "Playas de Oro", "Villa del Lago",
+            ]},
+        },
+        "Santa Fe": {
+            "Rosario": {"cp": 2000, "barrios": [
+                "Centro", "Pichincha", "Fisherton", "Echesortu",
+                "La Florida",
+            ]},
+            "Santa Fe Capital": {"cp": 3000, "barrios": [
+                "Centro", "Candioti", "Guadalupe", "Barranquitas",
+            ]},
+        },
+    },
+}
 
 PASTAS_SECAS = [
     "Spaghetti", "Tirabuzón", "Mostacholes", "Ñoquis", "Tallarín",
@@ -113,8 +162,65 @@ def write_csv(table, columns, rows):
         w.writerows(rows)
 
 
+def n_compras_cliente():
+    """Cantidad de compras de un cliente, con distribucion de cola larga."""
+    return random.choices(COMPRAS_VALORES, weights=COMPRAS_PESOS, k=1)[0]
+
+
 def telefono_ar():
     return "+54 11 " + f"{random.randint(4000, 6999)}-{random.randint(1000, 9999)}"
+
+
+# ============================================================================
+# 0) GEOGRAFIA (pais > provincia > localidad > barrio) + helper de direcciones
+# ============================================================================
+print("Generando geografia...")
+paises = []        # (id_pais, nombre)
+provincias = []    # (id_provincia, nombre, id_pais)
+localidades = []   # (id_localidad, nombre, id_provincia)
+barrios = []       # (id_barrio, nombre, id_localidad)
+barrios_por_localidad = {}   # id_localidad -> [id_barrio, ...]
+cp_base_por_localidad = {}   # id_localidad -> codigo postal base de la zona
+
+for nombre_pais, provs in GEOGRAFIA.items():
+    id_pais = len(paises) + 1
+    paises.append([id_pais, nombre_pais])
+    for nombre_prov, locs in provs.items():
+        id_provincia = len(provincias) + 1
+        provincias.append([id_provincia, nombre_prov, id_pais])
+        for nombre_loc, info in locs.items():
+            id_localidad = len(localidades) + 1
+            localidades.append([id_localidad, nombre_loc, id_provincia])
+            cp_base_por_localidad[id_localidad] = info["cp"]
+            barrios_por_localidad[id_localidad] = []
+            for nombre_barrio in info["barrios"]:
+                id_barrio = len(barrios) + 1
+                barrios.append([id_barrio, nombre_barrio, id_localidad])
+                barrios_por_localidad[id_localidad].append(id_barrio)
+
+ids_localidades = list(barrios_por_localidad.keys())
+
+# Cada franquicia y cada cliente tiene su propia direccion (relacion 1:1).
+direcciones = []   # (id_direccion, calle, numero_puerta, codigo_postal, id_barrio)
+
+
+def nueva_direccion(id_localidad):
+    """Crea una direccion unica dentro de la localidad dada y devuelve su id.
+
+    El barrio se elige entre los de esa localidad y el codigo postal sale del
+    rango de la zona, para que franquicia y sus clientes queden geograficamente
+    coherentes (misma localidad).
+    """
+    id_direccion = len(direcciones) + 1
+    cp = cp_base_por_localidad[id_localidad] + random.randint(0, 99)
+    direcciones.append([
+        id_direccion,
+        fake.street_name(),
+        random.randint(1, 9500),
+        str(cp),
+        random.choice(barrios_por_localidad[id_localidad]),
+    ])
+    return id_direccion
 
 
 # ============================================================================
@@ -123,21 +229,22 @@ def telefono_ar():
 print("Generando franquicias...")
 franquicias = []
 sellos = []
+localidad_por_sello = {}  # cada franquicia opera en una localidad
 for i in range(N_FRANQUICIAS):
     sello = f"FR-{i+1:03d}"
     sellos.append(sello)
+    # round-robin sobre las localidades: garantiza que todas queden cubiertas
+    id_localidad = ids_localidades[i % len(ids_localidades)]
+    localidad_por_sello[sello] = id_localidad
     fecha_inicio = fake.date_between_dates(date(2005, 1, 1), date(2024, 12, 31))
     franquicias.append([
         sello,
-        fake.street_name(),
-        random.randint(1, 9500),
-        str(random.randint(1000, 1900)),
-        random.choice(BARRIOS_CABA),
+        nueva_direccion(id_localidad),
         f"contacto.{sello.lower().replace('-', '')}@pastas.com.ar",
         telefono_ar(),
         fecha_inicio,
     ])
-fecha_inicio_por_sello = {f[0]: f[7] for f in franquicias}
+fecha_inicio_por_sello = {f[0]: f[4] for f in franquicias}
 
 # ============================================================================
 # 2) INGREDIENTES
@@ -207,7 +314,7 @@ for sello in sellos:
 # 5) CLIENTES  (<= 1000 por franquicia; favorita de la misma franquicia)
 # ============================================================================
 print("Generando clientes...")
-clientes = []  # (id, sello, nombre, apellido, doc, fnac, email, tel, cod_fav)
+clientes = []  # (id, sello, id_direccion, nombre, apellido, doc, fnac, email, tel, cod_fav)
 id_cliente = 0
 documentos_por_franq = {s: set() for s in sellos}
 for sello in sellos:
@@ -227,8 +334,11 @@ for sello in sellos:
         email = f"{nombre}.{apellido}.{id_cliente}@mail.com".lower().replace(" ", "")
         # favorita: 80% tiene, de su propia franquicia
         favorita = random.choice(codigos_franq) if (codigos_franq and random.random() < 0.8) else None
-        clientes.append([id_cliente, sello, nombre, apellido, doc, fnac,
-                         email, telefono_ar(), favorita])
+        # el cliente vive en la misma localidad que su franquicia
+        clientes.append([id_cliente, sello,
+                         nueva_direccion(localidad_por_sello[sello]),
+                         nombre, apellido, doc, fnac, email,
+                         telefono_ar(), favorita])
 
 # ============================================================================
 # 6) COMPRAS + DETALLE_COMPRA
@@ -242,7 +352,7 @@ for cli in clientes:
     codigos_precios = pastas_por_franq[sello]
     if not codigos_precios:
         continue
-    n_compras = random.randint(*COMPRAS_POR_CLIENTE)
+    n_compras = n_compras_cliente()
     # las compras no pueden ser anteriores al inicio de la franquicia
     inicio = max(fecha_inicio_por_sello[sello], HOY - timedelta(days=730))
     for _ in range(n_compras):
@@ -263,6 +373,11 @@ for cli in clientes:
 # Resumen de volúmenes
 # ============================================================================
 print("\n=== Volúmenes generados ===")
+print(f"  paises               : {len(paises):>7}")
+print(f"  provincias           : {len(provincias):>7}")
+print(f"  localidades          : {len(localidades):>7}")
+print(f"  barrios              : {len(barrios):>7}")
+print(f"  direcciones          : {len(direcciones):>7}")
 print(f"  franquicias          : {len(franquicias):>7}")
 print(f"  ingredientes         : {len(ingredientes):>7}")
 print(f"  rellenos             : {len(rellenos):>7}")
@@ -289,9 +404,19 @@ with open(SQL_PATH, "w", encoding="utf-8") as fh:
     fh.write("SET search_path TO pastas;\n")
     fh.write("BEGIN;\n\n")
 
+    emit_inserts(fh, "pais", ["id_pais", "nombre"], paises)
+    emit_inserts(fh, "provincia",
+                 ["id_provincia", "nombre", "id_pais"], provincias)
+    emit_inserts(fh, "localidad",
+                 ["id_localidad", "nombre", "id_provincia"], localidades)
+    emit_inserts(fh, "barrio",
+                 ["id_barrio", "nombre", "id_localidad"], barrios)
+    emit_inserts(fh, "direccion",
+                 ["id_direccion", "calle", "numero_puerta", "codigo_postal",
+                  "id_barrio"], direcciones)
     emit_inserts(fh, "franquicia",
-                 ["sello", "calle", "numero_puerta", "codigo_postal", "barrio",
-                  "email", "telefono", "fecha_inicio"], franquicias)
+                 ["sello", "id_direccion", "email", "telefono",
+                  "fecha_inicio"], franquicias)
     emit_inserts(fh, "ingrediente", ["id_ingrediente", "nombre"], ingredientes)
     emit_inserts(fh, "relleno", ["id_relleno", "nombre"], rellenos)
     emit_inserts(fh, "relleno_ingrediente",
@@ -303,8 +428,9 @@ with open(SQL_PATH, "w", encoding="utf-8") as fh:
                  ["sello", "codigo_pasta", "id_relleno",
                   "promedio_kilos_diarios"], pastas_rellenas)
     emit_inserts(fh, "cliente",
-                 ["id_cliente", "sello", "nombre", "apellido", "documento",
-                  "fecha_nacimiento", "email", "telefono", "codigo_favorita"], clientes)
+                 ["id_cliente", "sello", "id_direccion", "nombre", "apellido",
+                  "documento", "fecha_nacimiento", "email", "telefono",
+                  "codigo_favorita"], clientes)
     emit_inserts(fh, "compra", ["id_compra", "id_cliente", "fecha_hora"], compras)
     emit_inserts(fh, "detalle_compra",
                  ["id_compra", "sello", "codigo_pasta", "cantidad_kg",
@@ -312,6 +438,16 @@ with open(SQL_PATH, "w", encoding="utf-8") as fh:
 
     # Reajustar las secuencias SERIAL al máximo id insertado
     fh.write("-- Sincronizar secuencias con los ids insertados explícitamente\n")
+    fh.write("SELECT setval('pastas.pais_id_pais_seq', "
+             f"{len(paises)});\n")
+    fh.write("SELECT setval('pastas.provincia_id_provincia_seq', "
+             f"{len(provincias)});\n")
+    fh.write("SELECT setval('pastas.localidad_id_localidad_seq', "
+             f"{len(localidades)});\n")
+    fh.write("SELECT setval('pastas.barrio_id_barrio_seq', "
+             f"{len(barrios)});\n")
+    fh.write("SELECT setval('pastas.direccion_id_direccion_seq', "
+             f"{len(direcciones)});\n")
     fh.write("SELECT setval('pastas.ingrediente_id_ingrediente_seq', "
              f"{len(ingredientes)});\n")
     fh.write("SELECT setval('pastas.relleno_id_relleno_seq', "
@@ -327,9 +463,16 @@ with open(SQL_PATH, "w", encoding="utf-8") as fh:
 # ============================================================================
 print(f"Escribiendo CSVs en {DATA_DIR} ...")
 os.makedirs(DATA_DIR, exist_ok=True)
+write_csv("pais", ["id_pais", "nombre"], paises)
+write_csv("provincia", ["id_provincia", "nombre", "id_pais"], provincias)
+write_csv("localidad", ["id_localidad", "nombre", "id_provincia"], localidades)
+write_csv("barrio", ["id_barrio", "nombre", "id_localidad"], barrios)
+write_csv("direccion",
+          ["id_direccion", "calle", "numero_puerta", "codigo_postal",
+           "id_barrio"], direcciones)
 write_csv("franquicia",
-          ["sello", "calle", "numero_puerta", "codigo_postal", "barrio",
-           "email", "telefono", "fecha_inicio"], franquicias)
+          ["sello", "id_direccion", "email", "telefono", "fecha_inicio"],
+          franquicias)
 write_csv("ingrediente", ["id_ingrediente", "nombre"], ingredientes)
 write_csv("relleno", ["id_relleno", "nombre"], rellenos)
 write_csv("relleno_ingrediente",
@@ -341,8 +484,9 @@ write_csv("pasta_rellena",
           ["sello", "codigo_pasta", "id_relleno",
            "promedio_kilos_diarios"], pastas_rellenas)
 write_csv("cliente",
-          ["id_cliente", "sello", "nombre", "apellido", "documento",
-           "fecha_nacimiento", "email", "telefono", "codigo_favorita"], clientes)
+          ["id_cliente", "sello", "id_direccion", "nombre", "apellido",
+           "documento", "fecha_nacimiento", "email", "telefono",
+           "codigo_favorita"], clientes)
 write_csv("compra", ["id_compra", "id_cliente", "fecha_hora"], compras)
 write_csv("detalle_compra",
           ["id_compra", "sello", "codigo_pasta", "cantidad_kg",

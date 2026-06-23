@@ -1,16 +1,16 @@
-sello,calle,numero_puerta,codigo_postal,barrio,email,telefono,fecha_inicio
-FR-001,Avenida 4,1825,1025,Boedo,contacto.fr001@pastas.com.ar,+54 11 5003-4657,2008-10-15
-FR-002,Diagonal Omar Nuñez,2287,1754,Caballito,contacto.fr002@pastas.com.ar,+54 11 6771-9935,2009-10-01
-FR-003,Av. 1,1425,1604,Chacarita,contacto.fr003@pastas.com.ar,+54 11 4130-1488,2023-07-23
-FR-004,Av. 1,1536,1223,San Telmo,contacto.fr004@pastas.com.ar,+54 11 6069-1434,2008-03-10
-FR-005,Diagonal 9,9196,1203,Balvanera,contacto.fr005@pastas.com.ar,+54 11 5718-4611,2024-02-05
-FR-006,Av. 1,7360,1603,Boedo,contacto.fr006@pastas.com.ar,+54 11 4026-3615,2019-04-11
-FR-007,Avenida Chubut,6925,1348,Boedo,contacto.fr007@pastas.com.ar,+54 11 4636-4527,2010-06-08
-FR-008,Avenida Belgrano,5515,1104,Belgrano,contacto.fr008@pastas.com.ar,+54 11 5556-2584,2012-04-29
-FR-009,Diag. 5,5882,1867,Saavedra,contacto.fr009@pastas.com.ar,+54 11 6472-5333,2017-12-05
-FR-010,Av. Mendoza,712,1747,Barracas,contacto.fr010@pastas.com.ar,+54 11 6196-3045,2006-06-24
-FR-011,Diag. Santa Cruz,6202,1080,Balvanera,contacto.fr011@pastas.com.ar,+54 11 5200-6925,2007-09-07
-FR-012,Diagonal Buenos Aires,9460,1196,Belgrano,contacto.fr012@pastas.com.ar,+54 11 4187-4733,2017-04-22
-FR-013,Blv. Pte. Perón,4742,1081,San Telmo,contacto.fr013@pastas.com.ar,+54 11 4413-7227,2012-10-03
-FR-014,Avenida J.M. de Rosas,4555,1464,Saavedra,contacto.fr014@pastas.com.ar,+54 11 4666-7065,2012-12-03
-FR-015,Avenida 5,5821,1214,Boedo,contacto.fr015@pastas.com.ar,+54 11 6874-2169,2017-05-31
+sello,id_direccion,email,telefono,fecha_inicio
+FR-001,1,contacto.fr001@pastas.com.ar,+54 11 5126-5012,2017-10-15
+FR-002,2,contacto.fr002@pastas.com.ar,+54 11 4419-9935,2007-10-17
+FR-003,3,contacto.fr003@pastas.com.ar,+54 11 4122-2535,2006-09-28
+FR-004,4,contacto.fr004@pastas.com.ar,+54 11 6298-4257,2009-08-27
+FR-005,5,contacto.fr005@pastas.com.ar,+54 11 4902-8359,2017-12-30
+FR-006,6,contacto.fr006@pastas.com.ar,+54 11 4653-7924,2010-07-25
+FR-007,7,contacto.fr007@pastas.com.ar,+54 11 4881-6514,2018-12-18
+FR-008,8,contacto.fr008@pastas.com.ar,+54 11 4396-6881,2011-09-25
+FR-009,9,contacto.fr009@pastas.com.ar,+54 11 6988-8527,2017-01-27
+FR-010,10,contacto.fr010@pastas.com.ar,+54 11 4322-5803,2007-07-01
+FR-011,11,contacto.fr011@pastas.com.ar,+54 11 4787-2139,2021-08-02
+FR-012,12,contacto.fr012@pastas.com.ar,+54 11 4326-4814,2008-11-05
+FR-013,13,contacto.fr013@pastas.com.ar,+54 11 5857-6977,2024-09-14
+FR-014,14,contacto.fr014@pastas.com.ar,+54 11 4858-5374,2010-07-24
+FR-015,15,contacto.fr015@pastas.com.ar,+54 11 6600-3803,2012-02-08
