@@ -157,9 +157,10 @@ FROM pastas.detalle_compra;
 
 
 -- Consulta C2 --
+
 -- desvío estándar, mínimo, P05, primer cuartil, mediana,
---promedio, tercer cuartil, P95, máximo, cantidad y porcentaje de ceros,
---cantidad y porcentaje de valores negativos, cantidad de outliers
+-- promedio, tercer cuartil, P95, máximo, cantidad y porcentaje de ceros,
+-- cantidad y porcentaje de valores negativos, cantidad de outliers
 
 -- COLS NUMERICAS : (cantidad_kg, precio_unitario)
 
@@ -220,10 +221,148 @@ SELECT
     (SELECT COUNT(*) 
      FROM pastas.detalle_compra 
      WHERE cantidad_kg < (p.Q1 - 1.5 * (p.Q3 - p.Q1)) -- Outlier Q1 - 1.5(Q3-Q1)
-        OR cantidad_kg > (p.Q3 + 1.5 * (p.Q3 - p.Q1)) -- Outlier Q3 - 1.5(Q3-Q1)
+        OR cantidad_kg > (p.Q3 + 1.5 * (p.Q3 - p.Q1)) -- Outlier Q3 - 1.5(Q3-Q1) 
     ) AS cant_outliers
 FROM metricas_precio p;
 
 
 -- Consulta C3 --
+-- la frecuencia y el porcentaje de los hasta 10
+-- valores más frecuentes (de mayor a menor frecuencia), y del resto.
+
+-- Total de filas me va a servir para los porcentajes --
+WITH total_filas AS (
+    SELECT COUNT(*) AS total FROM pastas.detalle_compra
+),
+
+-- CONSULTAS PARA SELLO --
+freq_sello AS (
+	SELECT 
+		'sello' AS variable,
+		sello::TEXT AS categoria,
+		count(*) AS cantidad
+	FROM pastas.detalle_compra
+	GROUP BY sello
+),
+rank_sello AS (
+	SELECT 
+		variable, 
+		categoria, 
+		cantidad, 
+		ROW_NUMBER() OVER(ORDER BY cantidad DESC) AS rank
+    FROM freq_sello
+),
+-- Juntamos todo --
+resumen_sello AS (
+    SELECT 
+        variable,
+        CASE WHEN rank <= 10 THEN categoria ELSE 'Otros' END AS categoria_final,
+        SUM(cantidad) AS frecuencia,
+        ROUND((SUM(cantidad) * 100.0) / (SELECT total FROM total_filas), 2) AS porcentaje,
+        CASE WHEN rank <= 10 THEN rank ELSE 11 END AS rank
+    FROM rank_sello
+    GROUP BY variable, 
+		CASE 
+			WHEN rank <= 10 THEN categoria ELSE 'Otros' END,
+		CASE 
+			WHEN rank <= 10 THEN rank ELSE 11 END
+	ORDER BY rank 
+),
+
+-- Repetimos para codigo_pasta --
+freq_pasta AS (
+	SELECT 
+		'codigo_pasta' AS variable,
+		codigo_pasta::TEXT AS categoria,
+		count(*) AS cantidad
+	FROM pastas.detalle_compra
+	GROUP BY codigo_pasta
+),
+rank_pasta AS (
+	SELECT 
+		variable, 
+		categoria, 
+		cantidad, 
+		ROW_NUMBER() OVER(ORDER BY cantidad DESC) AS rank
+    FROM freq_pasta
+),
+-- Juntamos todo --
+resumen_pasta AS (
+    SELECT 
+        variable,
+        CASE WHEN rank <= 10 THEN categoria ELSE 'Otros' END AS categoria_final,
+        SUM(cantidad) AS frecuencia,
+        ROUND((SUM(cantidad) * 100.0) / (SELECT total FROM total_filas), 2) AS porcentaje,
+        CASE WHEN rank <= 10 THEN rank ELSE 11 END AS rank
+    FROM rank_pasta
+    GROUP BY variable, 
+		CASE 
+			WHEN rank <= 10 THEN categoria ELSE 'Otros' END,
+		CASE 
+			WHEN rank <= 10 THEN rank ELSE 11 END
+	ORDER BY rank 
+),
+
+
+freq_id_compra AS (
+	SELECT 
+		'id_compra' AS variable,
+		id_compra::TEXT AS categoria,
+		count(*) AS cantidad
+	FROM pastas.detalle_compra
+	GROUP BY id_compra
+),
+rank_id_compra AS (
+	SELECT 
+		variable, 
+		categoria, 
+		cantidad, 
+		ROW_NUMBER() OVER(ORDER BY cantidad DESC) AS rank
+    FROM freq_id_compra
+),
+-- Juntamos todo --
+resumen_id_compra AS (
+    SELECT 
+        variable,
+        CASE WHEN rank <= 10 THEN categoria ELSE 'Otros' END AS categoria_final,
+        SUM(cantidad) AS frecuencia,
+        ROUND((SUM(cantidad) * 100.0) / (SELECT total FROM total_filas), 2) AS porcentaje,
+        CASE WHEN rank <= 10 THEN rank ELSE 11 END AS rank
+    FROM rank_id_compra
+    GROUP BY variable, 
+		CASE 
+			WHEN rank <= 10 THEN categoria ELSE 'Otros' END,
+		CASE 
+			WHEN rank <= 10 THEN rank ELSE 11 END
+	ORDER BY rank 
+)
+
+SELECT 
+	variable,
+	categoria_final AS categoria,
+	frecuencia, 
+	porcentaje,
+	rank
+FROM resumen_pasta
+
+UNION ALL
+
+SELECT 
+	variable, 
+	categoria_final AS categoria, 
+	frecuencia, 
+	porcentaje,
+	rank
+FROM resumen_sello
+
+UNION ALL
+
+SELECT 
+	variable, 
+	categoria_final AS categoria, 
+	frecuencia, 
+	porcentaje,
+	rank
+FROM resumen_id_compra
+
 
