@@ -3,7 +3,7 @@
 -- Ejercicio 2.1 --
 
 -- PREGUNTA 1 --
--- ¿Cómo evolucionó la recaudación de cada franquicia mes a mes en el último año? --
+-- ¿Cómo evolucionó la recaudación de la franquicia FR-001 mes a mes en el último año? --
 -- Paso 1: Calculamos las ventas por franquicia por mes durante el ultimo año
 -- Paso 2: Apareamos los ingresos de un mes con los del mes anterior
 
@@ -15,7 +15,7 @@ WITH recaudacion_mensual AS (
         SUM(d.cantidad_kg * d.precio_unitario) AS ingreso_mensual
     FROM pastas.compra c
     JOIN pastas.detalle_compra d ON c.id_compra = d.id_compra
-	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' -- No ponemos CURRENT_DATE- INTERVAL '1 year' para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
+	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' AND d.sello = 'FR-001'-- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
     GROUP BY d.sello, TO_CHAR(c.fecha_hora, 'YYYY-MM')
 ),
 comparativa_mes_a_mes AS (
@@ -39,8 +39,7 @@ SELECT
 	ROUND(((ingreso_mensual - ingreso_mes_anterior) / ingreso_mes_anterior) * 100, 2) AS porcentaje_crecimiento -- Vemos el porcentaje para mejor lectura --
 FROM comparativa_mes_a_mes mam
 WHERE ingreso_mes_anterior IS NOT NULL
-ORDER BY sello, mes_anio ASC
-LIMIT 12;
+ORDER BY mes_anio ASC;
 
 -- Pregunta 2 --
 -- ¿Cuáles son los 3 tipos de pastas más vendidas y las 3 menos vendidas en cada una de las franquicias? -- 
@@ -89,6 +88,8 @@ ORDER BY
 LIMIT 12;
 
 select * from pastas.detalle_compra
+
+
 /* 
 Consultas ejercicio 2.2 - Funciones estadísticas 
 
@@ -220,8 +221,8 @@ SELECT
     p.*,
     (SELECT COUNT(*) 
      FROM pastas.detalle_compra 
-     WHERE cantidad_kg < (p.Q1 - 1.5 * (p.Q3 - p.Q1)) -- Outlier Q1 - 1.5(Q3-Q1)
-        OR cantidad_kg > (p.Q3 + 1.5 * (p.Q3 - p.Q1)) -- Outlier Q3 - 1.5(Q3-Q1) 
+     WHERE precio_unitario < (p.Q1 - 1.5 * (p.Q3 - p.Q1)) -- Outlier Q1 - 1.5(Q3-Q1)
+        OR precio_unitario > (p.Q3 + 1.5 * (p.Q3 - p.Q1)) -- Outlier Q3 - 1.5(Q3-Q1) 
     ) AS cant_outliers
 FROM metricas_precio p;
 
@@ -364,5 +365,54 @@ SELECT
 	porcentaje,
 	rank
 FROM resumen_id_compra
+
+
+
+-- Ejercicio 2.3 --
+-- Usamos la primera consulta del documento --
+
+EXPLAIN ANALYZE
+
+WITH recaudacion_mensual AS (
+    -- PASO 1 --
+    SELECT 
+        d.sello,
+        TO_CHAR(c.fecha_hora, 'YYYY-MM') AS mes_anio,
+        SUM(d.cantidad_kg * d.precio_unitario) AS ingreso_mensual
+    FROM pastas.compra c
+    JOIN pastas.detalle_compra d ON c.id_compra = d.id_compra
+	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' AND d.sello = 'FR-001' -- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
+    GROUP BY d.sello, TO_CHAR(c.fecha_hora, 'YYYY-MM')
+),
+comparativa_mes_a_mes AS (
+    -- PASO 2 --
+    SELECT 
+        sello,
+        mes_anio,
+        ingreso_mensual,
+        LAG(ingreso_mensual) OVER (
+            PARTITION BY sello 
+            ORDER BY mes_anio ASC
+        ) AS ingreso_mes_anterior
+    FROM recaudacion_mensual
+	
+)
+SELECT 
+    sello,
+    mes_anio,
+    ingreso_mensual,
+    ingreso_mes_anterior,
+    (ingreso_mensual - ingreso_mes_anterior) AS crecimiento_neto,
+	ROUND(((ingreso_mensual - ingreso_mes_anterior) / ingreso_mes_anterior) * 100, 2) AS porcentaje_crecimiento -- Vemos el porcentaje para mejor lectura --
+FROM comparativa_mes_a_mes mam
+WHERE ingreso_mes_anterior IS NOT NULL
+ORDER BY mes_anio ASC;
+
+CREATE INDEX idx_compra_fecha_hora ON pastas.compra(fecha_hora); -- No obtuvimos mejoras con este index
+DROP INDEX pastas.idx_compra_fecha_hora;
+
+CREATE INDEX idx_detalle_compra_sello ON pastas.detalle_compra(sello);
+
+
 
 
