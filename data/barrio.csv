@@ -1,53 +1,21 @@
-id_barrio,nombre,id_localidad
-1,Palermo,1
-2,Recoleta,1
-3,Belgrano,1
-4,Caballito,1
-5,Almagro,1
-6,Flores,1
-7,Villa Crespo,1
-8,San Telmo,1
-9,Boedo,1
-10,Núñez,1
-11,Villa Urquiza,1
-12,Saavedra,1
-13,Colegiales,1
-14,Chacarita,1
-15,Barracas,1
-16,La Boca,1
-17,Constitución,1
-18,Balvanera,1
-19,Villa Devoto,1
-20,Liniers,1
-21,Casco Urbano,2
-22,Tolosa,2
-23,Los Hornos,2
-24,City Bell,2
-25,Gonnet,2
-26,Villa Elisa,2
-27,Centro,3
-28,La Perla,3
-29,Güemes,3
-30,Constitución,3
-31,Punta Mogotes,3
-32,Centro,4
-33,Villa Mitre,4
-34,Palihue,4
-35,Patagonia,4
-36,Nueva Córdoba,5
-37,Alberdi,5
-38,Güemes,5
-39,Cerro de las Rosas,5
-40,Alta Córdoba,5
-41,Centro,6
-42,Playas de Oro,6
-43,Villa del Lago,6
-44,Centro,7
-45,Pichincha,7
-46,Fisherton,7
-47,Echesortu,7
-48,La Florida,7
-49,Centro,8
-50,Candioti,8
-51,Guadalupe,8
-52,Barranquitas,8
+id_barrio,nombre,codigo_postal
+1,Palermo,1425
+2,Recoleta,1113
+3,Belgrano,1426
+4,Caballito,1405
+5,Almagro,1172
+6,Flores,1406
+7,Villa Crespo,1414
+8,San Telmo,1103
+9,Boedo,1218
+10,Núñez,1429
+11,Villa Urquiza,1431
+12,Saavedra,1430
+13,Colegiales,1427
+14,Chacarita,1414
+15,Barracas,1267
+16,La Boca,1161
+17,Constitución,1153
+18,Balvanera,1208
+19,Villa Devoto,1419
+20,Liniers,1408

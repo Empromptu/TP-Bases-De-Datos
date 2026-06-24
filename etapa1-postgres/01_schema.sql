@@ -1,61 +1,40 @@
 -- Etapa 1.2 - Modelo relacional en PostgreSQL (fabrica de pastas)
 -- Crea el esquema: tablas, claves y constraints. Sin indices (van en la Etapa 2.3).
--- Las tablas se crean respetando el orden de las FK.
 
 DROP SCHEMA IF EXISTS pastas CASCADE;
 CREATE SCHEMA pastas;
 SET search_path TO pastas;
 
 
-CREATE TABLE pais (
-    id_pais SERIAL      PRIMARY KEY,
-    nombre  VARCHAR(80) NOT NULL UNIQUE
-);
-
-CREATE TABLE provincia (
-    id_provincia SERIAL      PRIMARY KEY,
-    nombre       VARCHAR(80) NOT NULL,
-    id_pais      INTEGER     NOT NULL,
-
-    CONSTRAINT fk_provincia_pais       FOREIGN KEY (id_pais)
-        REFERENCES pais (id_pais) ON DELETE CASCADE,
-    CONSTRAINT uq_provincia_nombre_pais UNIQUE (id_pais, nombre)
-);
-
-CREATE TABLE localidad (
-    id_localidad SERIAL      PRIMARY KEY,
-    nombre       VARCHAR(80) NOT NULL,
-    id_provincia INTEGER     NOT NULL,
-
-    CONSTRAINT fk_localidad_provincia        FOREIGN KEY (id_provincia)
-        REFERENCES provincia (id_provincia) ON DELETE CASCADE,
-    CONSTRAINT uq_localidad_nombre_provincia UNIQUE (id_provincia, nombre)
-);
-
+-- Toda la geografia es de la Ciudad Autonoma de Buenos Aires
 CREATE TABLE barrio (
-    id_barrio    SERIAL      PRIMARY KEY,
-    nombre       VARCHAR(80) NOT NULL,
-    id_localidad INTEGER     NOT NULL,
+    id_barrio     SERIAL      PRIMARY KEY,
+    nombre        VARCHAR(80) NOT NULL UNIQUE,
+    codigo_postal VARCHAR(10) NOT NULL
+);
 
-    CONSTRAINT fk_barrio_localidad        FOREIGN KEY (id_localidad)
-        REFERENCES localidad (id_localidad) ON DELETE CASCADE,
-    CONSTRAINT uq_barrio_nombre_localidad UNIQUE (id_localidad, nombre)
+-- Una calle pertenece a un barrio. 
+CREATE TABLE calle (
+    id_calle  SERIAL       PRIMARY KEY,
+    nombre    VARCHAR(120) NOT NULL,
+    id_barrio INTEGER      NOT NULL,
+
+    CONSTRAINT fk_calle_barrio    FOREIGN KEY (id_barrio)
+        REFERENCES barrio (id_barrio) ON DELETE CASCADE,
+    CONSTRAINT uq_calle_nombre_barrio UNIQUE (id_barrio, nombre)
 );
 
 CREATE TABLE direccion (
-    id_direccion  SERIAL       PRIMARY KEY,
-    calle         VARCHAR(120) NOT NULL,
-    numero_puerta INTEGER      NOT NULL,
-    codigo_postal VARCHAR(10)  NOT NULL,
-    id_barrio     INTEGER      NOT NULL,
+    id_direccion  SERIAL  PRIMARY KEY,
+    id_calle      INTEGER NOT NULL,
+    numero_puerta INTEGER NOT NULL,
 
-    CONSTRAINT fk_direccion_barrio  FOREIGN KEY (id_barrio)
-        REFERENCES barrio (id_barrio) ON DELETE RESTRICT,
+    CONSTRAINT fk_direccion_calle   FOREIGN KEY (id_calle)
+        REFERENCES calle (id_calle) ON DELETE RESTRICT,
     CONSTRAINT chk_direccion_puerta CHECK (numero_puerta > 0)
 );
 
--- Cada franquicia es independiente y se identifica por su sello. Su ubicacion
--- vive en direccion.
+-- Cada franquicia es independiente y se identifica por su sello. Su ubicacion vive en direccion.
 CREATE TABLE franquicia (
     sello           VARCHAR(20)  PRIMARY KEY,
     id_direccion    INTEGER      NOT NULL UNIQUE,
@@ -172,8 +151,7 @@ CREATE TABLE compra (
     CONSTRAINT chk_compra_fecha  CHECK (fecha_hora <= CURRENT_TIMESTAMP)
 );
 
--- Detalle de cada compra: que pasta y cuantos kilos. Guardamos el precio del kilo
--- para que las consultas de las etapas siguientes tengan algo que sumar.
+-- Detalle de cada compra: que pasta y cuantos kilos.
 CREATE TABLE detalle_compra (
     id_compra        INTEGER       NOT NULL,
     sello            VARCHAR(20)   NOT NULL,

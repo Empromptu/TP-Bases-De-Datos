@@ -73,17 +73,11 @@ GROUP BY d.id_direccion
 HAVING COUNT(DISTINCT f.sello) + COUNT(DISTINCT c.id_cliente) > 1;
 
 \echo '-- A10. Integridad de la jerarquia geografica (niveles sin padre)'
-SELECT 'provincia' AS nivel, pr.id_provincia AS id FROM provincia pr
-  LEFT JOIN pais pa ON pa.id_pais = pr.id_pais WHERE pa.id_pais IS NULL
-UNION ALL
-SELECT 'localidad', l.id_localidad FROM localidad l
-  LEFT JOIN provincia pr ON pr.id_provincia = l.id_provincia WHERE pr.id_provincia IS NULL
-UNION ALL
-SELECT 'barrio', b.id_barrio FROM barrio b
-  LEFT JOIN localidad l ON l.id_localidad = b.id_localidad WHERE l.id_localidad IS NULL
+SELECT 'calle' AS nivel, c.id_calle AS id FROM calle c
+  LEFT JOIN barrio b ON b.id_barrio = c.id_barrio WHERE b.id_barrio IS NULL
 UNION ALL
 SELECT 'direccion', d.id_direccion FROM direccion d
-  LEFT JOIN barrio b ON b.id_barrio = d.id_barrio WHERE b.id_barrio IS NULL;
+  LEFT JOIN calle c ON c.id_calle = d.id_calle WHERE c.id_calle IS NULL;
 
 \echo '-- A11. Direcciones con numero de puerta invalido'
 SELECT id_direccion, numero_puerta
@@ -92,10 +86,8 @@ WHERE numero_puerta <= 0;
 
 \echo ''
 \echo '== B) Cantidad de registros por tabla =='
-SELECT 'pais'                AS tabla, COUNT(*) AS filas FROM pais
-UNION ALL SELECT 'provincia',           COUNT(*) FROM provincia
-UNION ALL SELECT 'localidad',           COUNT(*) FROM localidad
-UNION ALL SELECT 'barrio',              COUNT(*) FROM barrio
+SELECT 'barrio'              AS tabla, COUNT(*) AS filas FROM barrio
+UNION ALL SELECT 'calle',               COUNT(*) FROM calle
 UNION ALL SELECT 'direccion',           COUNT(*) FROM direccion
 UNION ALL SELECT 'franquicia',          COUNT(*) FROM franquicia
 UNION ALL SELECT 'pasta',               COUNT(*) FROM pasta

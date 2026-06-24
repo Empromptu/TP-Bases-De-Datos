@@ -1,46 +1,46 @@
 id_ingrediente,nombre
-1,Manteca
-2,Roquefort
-3,Verdura
-4,Crema
-5,Zucchini
-6,Tomate seco
-7,Sésamo
-8,Hongos
-9,Huevo
-10,Queso mozzarella
-11,Nuez moscada
-12,Jamón
-13,Perejil
-14,Ajo
-15,Pollo
-16,Trufa
-17,Calabaza
-18,Albahaca
-19,Batata
-20,Radicchio
-21,Atún
-22,Cerdo
-23,Puerro
-24,Cebolla
-25,Berenjena
-26,Castaña
-27,Queso parmesano
-28,Almendra
-29,Aceitunas
-30,Carne vacuna
-31,Salmón
-32,Mascarpone
-33,Acelga
-34,Provolone
-35,Choclo
-36,Burrata
-37,Cordero
-38,Nuez
-39,Espinaca
-40,Pera
-41,Panceta
-42,Pistacho
-43,Ricota
-44,Gorgonzola
-45,Morrón
+1,Acelga
+2,Gorgonzola
+3,Cordero
+4,Ajo
+5,Crema
+6,Choclo
+7,Provolone
+8,Pollo
+9,Roquefort
+10,Sésamo
+11,Manteca
+12,Pistacho
+13,Aceitunas
+14,Puerro
+15,Salmón
+16,Carne vacuna
+17,Queso parmesano
+18,Trufa
+19,Perejil
+20,Jamón
+21,Zucchini
+22,Espinaca
+23,Queso mozzarella
+24,Atún
+25,Huevo
+26,Nuez
+27,Castaña
+28,Radicchio
+29,Cebolla
+30,Cerdo
+31,Mascarpone
+32,Burrata
+33,Nuez moscada
+34,Pera
+35,Morrón
+36,Ricota
+37,Berenjena
+38,Almendra
+39,Calabaza
+40,Panceta
+41,Tomate seco
+42,Hongos
+43,Verdura
+44,Albahaca
+45,Batata
