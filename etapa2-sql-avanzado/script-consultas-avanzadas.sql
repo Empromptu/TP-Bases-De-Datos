@@ -3,23 +3,44 @@
 -- Ejercicio 2.1 --
 
 -- PREGUNTA 1 --
--- ¿Cómo evolucionó la recaudación de la franquicia FR-001 mes a mes en el último año? --
--- Paso 1: Calculamos las ventas por franquicia por mes durante el ultimo año
--- Paso 2: Apareamos los ingresos de un mes con los del mes anterior
+-- ¿Cómo evolucionó la recaudación de las franquicias del barrio Centro mes a mes en el último año? --
+-- Paso 1: Nos quedamos con todas las compras que se realizaron en villa crespo
+-- Paso 2: Calculamos las ventas de la franquicia por mes durante el ultimo año
+-- Paso 3: Apareamos los ingresos de un mes con los del mes anterior
 
-WITH recaudacion_mensual AS (
-    -- PASO 1 --
+select * from pastas.franquicia f
+inner join pastas.direccion d ON d.id_direccion = f.id_direccion
+inner join pastas.barrio b on b.id_barrio = d.id_barrio
+
+select * from pastas.barrio where nombre = 'Villa Crespo'
+select * from pastas.barrio
+WITH compra_villa_crespo AS (
+	SELECT 
+		cl.id_cliente AS cliente,
+		cl.sello,
+		co.id_compra,
+		co.fecha_hora,
+		b.nombre
+	FROM pastas.compra co
+	JOIN pastas.cliente cl ON cl.id_cliente = co.id_cliente
+	JOIN pastas.franquicia f ON f.sello = cl.sello
+	JOIN pastas.direccion d ON d.id_direccion = f.id_direccion
+	JOIN pastas.barrio b ON b.id_barrio = d.id_barrio
+	WHERE b.nombre ='Palermo'
+),
+recaudacion_mensual AS (
+    -- PASO 2 --
     SELECT 
         d.sello,
         TO_CHAR(c.fecha_hora, 'YYYY-MM') AS mes_anio,
         SUM(d.cantidad_kg * d.precio_unitario) AS ingreso_mensual
-    FROM pastas.compra c
+    FROM compra_villa_crespo c
     JOIN pastas.detalle_compra d ON c.id_compra = d.id_compra
-	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' AND d.sello = 'FR-001'-- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
+	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' -- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
     GROUP BY d.sello, TO_CHAR(c.fecha_hora, 'YYYY-MM')
 ),
 comparativa_mes_a_mes AS (
-    -- PASO 2 --
+    -- PASO 3 --
     SELECT 
         sello,
         mes_anio,
@@ -39,7 +60,8 @@ SELECT
 	ROUND(((ingreso_mensual - ingreso_mes_anterior) / ingreso_mes_anterior) * 100, 2) AS porcentaje_crecimiento -- Vemos el porcentaje para mejor lectura --
 FROM comparativa_mes_a_mes mam
 WHERE ingreso_mes_anterior IS NOT NULL
-ORDER BY mes_anio ASC;
+ORDER BY sello,
+		mes_anio ASC;
 
 -- Pregunta 2 --
 -- ¿Cuáles son los 3 tipos de pastas más vendidas y las 3 menos vendidas en cada una de las franquicias? -- 
@@ -48,6 +70,7 @@ ORDER BY mes_anio ASC;
 -- 2. Creamos un ranking con el resultado anterior --
 -- 3. Nos quedamos con los dos tops segun el ranking --
 
+EXPLAIN ANALYZE
 -- PASO 1 --
 WITH venta_por_pasta AS (
     SELECT 
