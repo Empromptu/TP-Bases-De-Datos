@@ -52,7 +52,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongodata:/data/db
+      - mongodata_secure:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "-u", "mongo", "-p", "pastas_mongo", "--quiet", "--eval", "db.runCommand({ping: 1}).ok"]
       interval: 5s
@@ -61,4 +61,4 @@ services:
 
 volumes:
   pgdata:
-  mongodata:
+  mongodata_secure:
