@@ -58,7 +58,7 @@ arranque (ejecuta `01_schema.sql` → `02_seed.sql` → `03_validacion.sql`).
 |---|---|---|
 | PostgreSQL | 5432 | `postgresql://postgres:pastas@localhost:5432/pastas_tp` |
 | Redis | 6379 | `redis://localhost:6379` |
-| MongoDB | 27017 | `mongodb://localhost:27017` |
+| MongoDB | 27017 | `mongodb://mongo:pastas_mongo@localhost:27017/` |
 
 Para reiniciar la base desde cero: `docker compose down -v && docker compose up -d`.
 
