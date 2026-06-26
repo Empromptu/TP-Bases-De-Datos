@@ -1,19 +1,16 @@
+
+
+
 -- Etapa 2 --
 
 -- Ejercicio 2.1 --
 
 -- PREGUNTA 1 --
--- ¿Cómo evolucionó la recaudación de las franquicias del barrio Centro mes a mes en el último año? --
--- Paso 1: Nos quedamos con todas las compras que se realizaron en villa crespo
+-- ¿Cómo evolucionó la recaudación de las franquicias del barrio de Palermo mes a mes en el último año? --
+-- Paso 1: Nos quedamos con todas las compras que se realizaron en Palermo
 -- Paso 2: Calculamos las ventas de la franquicia por mes durante el ultimo año
 -- Paso 3: Apareamos los ingresos de un mes con los del mes anterior
 
-select * from pastas.franquicia f
-inner join pastas.direccion d ON d.id_direccion = f.id_direccion
-inner join pastas.barrio b on b.id_barrio = d.id_barrio
-
-select * from pastas.barrio where nombre = 'Villa Crespo'
-select * from pastas.barrio
 WITH compra_villa_crespo AS (
 	SELECT 
 		cl.id_cliente AS cliente,
@@ -25,7 +22,8 @@ WITH compra_villa_crespo AS (
 	JOIN pastas.cliente cl ON cl.id_cliente = co.id_cliente
 	JOIN pastas.franquicia f ON f.sello = cl.sello
 	JOIN pastas.direccion d ON d.id_direccion = f.id_direccion
-	JOIN pastas.barrio b ON b.id_barrio = d.id_barrio
+	JOIN pastas.calle c ON c.id_calle = d.id_calle 
+	JOIN pastas.barrio b on b.id_barrio = c.id_barrio
 	WHERE b.nombre ='Palermo'
 ),
 recaudacion_mensual AS (
@@ -70,7 +68,6 @@ ORDER BY sello,
 -- 2. Creamos un ranking con el resultado anterior --
 -- 3. Nos quedamos con los dos tops segun el ranking --
 
-EXPLAIN ANALYZE
 -- PASO 1 --
 WITH venta_por_pasta AS (
     SELECT 
@@ -109,8 +106,6 @@ ORDER BY
     top_mas_ventas ASC NULLS LAST, 
     top_menos_ventas ASC NULLS LAST
 LIMIT 12;
-
-select * from pastas.detalle_compra
 
 
 /* 
@@ -327,7 +322,7 @@ resumen_pasta AS (
 	ORDER BY rank 
 ),
 
-
+-- Repetimos para id_compra --
 freq_id_compra AS (
 	SELECT 
 		'id_compra' AS variable,
@@ -360,7 +355,7 @@ resumen_id_compra AS (
 			WHEN rank <= 10 THEN rank ELSE 11 END
 	ORDER BY rank 
 )
-
+-- Armamos la tabla final --
 SELECT 
 	variable,
 	categoria_final AS categoria,
@@ -396,19 +391,34 @@ FROM resumen_id_compra
 
 EXPLAIN ANALYZE
 
-WITH recaudacion_mensual AS (
-    -- PASO 1 --
+WITH compra_villa_crespo AS (
+	SELECT 
+		cl.id_cliente AS cliente,
+		cl.sello,
+		co.id_compra,
+		co.fecha_hora,
+		b.nombre
+	FROM pastas.compra co
+	JOIN pastas.cliente cl ON cl.id_cliente = co.id_cliente
+	JOIN pastas.franquicia f ON f.sello = cl.sello
+	JOIN pastas.direccion d ON d.id_direccion = f.id_direccion
+	JOIN pastas.calle c ON c.id_calle = d.id_calle 
+	JOIN pastas.barrio b on b.id_barrio = c.id_barrio
+	WHERE b.nombre ='Palermo' 
+),
+recaudacion_mensual AS (
+    -- PASO 2 --
     SELECT 
         d.sello,
-        TO_CHAR(c.fecha_hora, 'YYYY-MM') AS mes_anio,
+		TO_CHAR(c.fecha_hora, 'YYYY-MM') AS mes_anio,
         SUM(d.cantidad_kg * d.precio_unitario) AS ingreso_mensual
-    FROM pastas.compra c
-    JOIN pastas.detalle_compra d ON c.id_compra = d.id_compra
-	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' AND d.sello = 'FR-001' -- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
+    FROM compra_villa_crespo c
+    JOIN pastas.detalle_compra d ON c.id_compra = d.id_compra 
+	WHERE c.fecha_hora BETWEEN DATE'2025-05-01' AND DATE '2026-06-01' -- No ponemos (CURRENT_DATE - INTERVAL '1 year') para poder replicar los resultados, tambien ponemos un mes demas para poder calcular el primer mes --
     GROUP BY d.sello, TO_CHAR(c.fecha_hora, 'YYYY-MM')
 ),
 comparativa_mes_a_mes AS (
-    -- PASO 2 --
+    -- PASO 3 --
     SELECT 
         sello,
         mes_anio,
@@ -418,7 +428,6 @@ comparativa_mes_a_mes AS (
             ORDER BY mes_anio ASC
         ) AS ingreso_mes_anterior
     FROM recaudacion_mensual
-	
 )
 SELECT 
     sello,
@@ -429,13 +438,11 @@ SELECT
 	ROUND(((ingreso_mensual - ingreso_mes_anterior) / ingreso_mes_anterior) * 100, 2) AS porcentaje_crecimiento -- Vemos el porcentaje para mejor lectura --
 FROM comparativa_mes_a_mes mam
 WHERE ingreso_mes_anterior IS NOT NULL
-ORDER BY mes_anio ASC;
+ORDER BY sello,
+		mes_anio ASC;
 
-CREATE INDEX idx_compra_fecha_hora ON pastas.compra(fecha_hora); -- No obtuvimos mejoras con este index
-DROP INDEX pastas.idx_compra_fecha_hora;
+-- Creacion de indice en compra.id_cliente lo que permite mejorar el JOIN entre la compra y los clientes
+-- Compra es una tabla masiva asi que esperamos un impacto interesante en el costo de la consulta
 
-CREATE INDEX idx_detalle_compra_sello ON pastas.detalle_compra(sello);
-
-
-
-
+CREATE INDEX idx_compra_id_cliente ON pastas.compra(id_cliente);
+DROP INDEX pastas.idx_compra_id_cliente;
