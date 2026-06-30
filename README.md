@@ -8,8 +8,10 @@ cuatro tecnologías:
 - **Apache Spark** — MapReduce con RDDs (Etapa 3)
 - **Redis** y **MongoDB** — persistencia políglota (Etapa 4)
 
-Las cuatro trabajan sobre el **mismo dataset**, generado de forma determinista
-por `etapa1-postgres/generar_datos.py`.
+PostgreSQL, Spark y Redis trabajan sobre el **mismo dataset**, generado de
+forma determinista por `etapa1-postgres/generar_datos.py`. MongoDB genera su
+propio conjunto de documentos (con Faker, dentro del notebook) para mostrar un
+modelo documental denormalizado.
 
 ## Modelo de datos (DER)
 
@@ -29,14 +31,12 @@ por `etapa1-postgres/generar_datos.py`.
 │   ├── generar_datos.py        # Generador determinista (semilla 42) → SQL y CSV
 │   └── requirements.txt        # Dependencias del generador
 ├── etapa2-sql-avanzado/        # SQL avanzado
-│   ├── 01_ventanas.sql         # Funciones de ventana
-│   ├── 02_estadisticas.sql     # Consultas estadísticas
-│   └── 03_performance.sql      # Índices y análisis de performance
+│   └── script-consultas-avanzadas.sql  # Funciones de ventana, estadísticas e índices
 ├── etapa3-spark/               # MapReduce con RDDs
 │   └── mapreduce.ipynb         # Notebook PySpark
 └── etapa4-nosql/               # Persistencia políglota
     ├── redis.ipynb             # Notebook Redis
-    └── mongodb.ipynb           # Notebook MongoDB
+    └── MongoDB.ipynb           # Notebook MongoDB
 ```
 
 ## Requisitos
@@ -75,4 +75,4 @@ pip install -r requirements.txt
 - **Determinismo:** el generador usa semilla fija (42), así que produce siempre
   el mismo dataset en SQL y CSV.
 - **Sin índices en la Etapa 1:** la consigna lo prohíbe; se crean recién en
-  `etapa2-sql-avanzado/03_performance.sql`.
+  `etapa2-sql-avanzado/script-consultas-avanzadas.sql`.
